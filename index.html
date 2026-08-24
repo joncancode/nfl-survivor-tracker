@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Survivor Picks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --bg-alt:#eef1f5;
+    --card:#f4f5f7;
+    --line:#e2e4e9;
+    --chalk:#111827;
+    --sage:#6b7280;
+    --sage-dim:#9aa1ac;
+    --amber:#2563eb;
+    --red:#dc2626;
+    --red-dim:#fca5a5;
+    --used:#9ca3af;
+    --spot:#eab308;
+    --star:#16a34a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--chalk);font-family:'Inter',sans-serif;}
+  body{
+    background:var(--bg);
+    min-height:100vh;
+    padding-bottom:40px;
+  }
+  .wrap{max-width:1200px; margin:0 auto; padding:0 16px;}
+
+  /* Header — compact, season stats folded inline instead of a separate card */
+  header{padding:12px 16px 10px; border-bottom:1px solid var(--line);}
+  .head-row{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:6px 16px; max-width:1200px; margin:0 auto;}
+  h1{font-family:'Anton',sans-serif; font-weight:400; font-size:23px; letter-spacing:0.02em; margin:0; color:var(--chalk);}
+  h1 span{color:var(--amber); font-size:11.5px; font-family:'JetBrains Mono',monospace; letter-spacing:0.1em; margin-left:8px; font-weight:400;}
+  .head-stats{display:flex; gap:14px; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--sage);}
+  .head-stats strong{color:var(--chalk); font-size:13px;}
+
+  /* Live odds — collapsed by default to save space */
+  .odds{margin:8px 0 0; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .odds-toggle{
+    width:100%; display:flex; justify-content:space-between; align-items:center; background:none; border:none; color:var(--sage);
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; padding:10px 14px; cursor:pointer; text-transform:uppercase; letter-spacing:0.06em;
+  }
+  .odds-toggle:hover{color:var(--chalk);}
+  .odds-toggle .chev{color:var(--sage-dim); font-size:10px;}
+  .odds-body{padding:0 14px 14px;}
+  .odds-row{display:flex; gap:8px;}
+  .odds-input{
+    flex:1; min-width:0; background:var(--bg-alt); border:1px solid var(--line); color:var(--chalk); font-family:'JetBrains Mono',monospace;
+    font-size:12px; padding:8px 10px; border-radius:6px;
+  }
+  .odds-input:focus{outline:none; border-color:var(--sage);}
+  .odds-btn{
+    background:var(--amber); color:#ffffff; border:none; font-family:'JetBrains Mono',monospace; font-weight:600;
+    font-size:11px; text-transform:uppercase; letter-spacing:0.05em; padding:8px 14px; border-radius:6px; cursor:pointer; white-space:nowrap;
+  }
+  .odds-status{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--sage); margin-top:8px; line-height:1.55;}
+  .odds-status.err{color:var(--red);}
+  .odds-status.ok{color:var(--amber);}
+  .odds-changes{margin-top:8px; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .odds-change{display:flex; justify-content:space-between; gap:10px; padding:6px 10px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--chalk); background:var(--bg-alt);}
+  .odds-change:nth-child(even){background:var(--card);}
+  .odds-change span:last-child{color:var(--amber); white-space:nowrap;}
+  .odds-change.more{color:var(--sage-dim); justify-content:center;}
+  .odds-hint{font-size:11px; color:var(--sage-dim); margin-top:6px; line-height:1.55;}
+
+  .odds-manual-head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:14px;}
+  .odds-manual-head span{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--sage);}
+  .odds-week-select{
+    background:var(--bg-alt); border:1px solid var(--line); color:var(--chalk); font-family:'JetBrains Mono',monospace;
+    font-size:11.5px; padding:6px 8px; border-radius:6px;
+  }
+  .odds-manual-hint{font-size:11px; color:var(--sage-dim); margin-top:5px; line-height:1.5;}
+  .odds-manual-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(210px,1fr)); gap:6px; margin-top:8px;}
+  .odds-manual-row{display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--bg-alt); border:1px solid var(--line); border-radius:6px; padding:6px 8px;}
+  .odds-manual-row span{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--chalk); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .odds-manual-row input{
+    width:64px; background:var(--card); border:1px solid var(--line); color:var(--chalk); font-family:'JetBrains Mono',monospace;
+    font-size:11.5px; padding:5px 6px; border-radius:5px; text-align:right;
+  }
+  .odds-manual-row input:focus{outline:none; border-color:var(--sage);}
+  .odds-auto{margin-top:16px; padding-top:12px; border-top:1px solid var(--line);}
+  .odds-auto-head{font-size:10.5px; color:var(--sage-dim); margin-bottom:8px; line-height:1.5;}
+
+  .model-note{font-size:12px; color:var(--sage); line-height:1.55; padding:6px 2px 2px;}
+
+  /* Suggested season plan — compact horizontal strip, not a tall table */
+  .planstrip{margin:10px 0 0;}
+  .planstrip-head{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px 12px; padding:0 2px 8px;}
+  .planstrip-title{font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--sage);}
+  .planstrip-odds{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--sage);}
+  .planstrip-odds strong{color:var(--amber); font-size:13px;}
+  .planstrip-row{display:grid; grid-template-columns:repeat(auto-fill, minmax(108px,1fr)); gap:6px;}
+  .planchip{
+    border-radius:8px; padding:7px 8px 6px; text-align:left; cursor:pointer;
+    border:1px solid var(--line); background:var(--card); font-family:'JetBrains Mono',monospace;
+  }
+  .planchip:hover{filter:brightness(0.96);}
+  .planchip .pc-wk{display:block; font-size:9px; color:var(--sage-dim); letter-spacing:0.05em;}
+  .planchip .pc-top{display:flex; justify-content:space-between; align-items:baseline; gap:6px; margin-top:2px;}
+  .planchip .pc-team{font-size:11.5px; color:var(--chalk); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .planchip .pc-pct{font-size:10.5px; color:var(--sage); white-space:nowrap;}
+  .planchip .pc-alts{margin-top:5px; padding-top:4px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:2px;}
+  .planchip .pc-alt{display:flex; justify-content:space-between; gap:6px; font-size:9.5px; color:#374151; white-space:nowrap;}
+  .planchip .pc-alt b{color:#1f2937; font-weight:700;}
+  .planchip.tier-elite{ background:linear-gradient(rgba(37,99,235,0.50),rgba(37,99,235,0.50)),var(--card);}
+  .planchip.tier-elite .pc-pct{color:var(--amber); font-weight:800;}
+  .planchip.tier-strong{ background:linear-gradient(rgba(37,99,235,0.28),rgba(37,99,235,0.28)),var(--card);}
+  .planchip.tier-strong .pc-pct{color:var(--amber); font-weight:700;}
+  .planchip.tier-good{ background:linear-gradient(rgba(37,99,235,0.12),rgba(37,99,235,0.12)),var(--card);}
+  .planchip.tier-good .pc-pct{color:var(--amber);}
+  .planchip.tier-risky{ background:linear-gradient(rgba(220,38,38,0.12),rgba(220,38,38,0.12)),var(--card);}
+  .planchip.tier-risky .pc-pct{color:var(--red);}
+  .planchip.tier-weak{ background:linear-gradient(rgba(220,38,38,0.28),rgba(220,38,38,0.28)),var(--card);}
+  .planchip.tier-weak .pc-pct{color:var(--red); font-weight:700;}
+  .planchip.tier-bad{ background:linear-gradient(rgba(220,38,38,0.50),rgba(220,38,38,0.50)),var(--card); border-color:var(--red);}
+  .planchip.tier-bad .pc-pct{color:var(--red); font-weight:800;}
+
+  /* Matrix — every team × every week, one screen, the primary interactive surface */
+  .matrix-section{margin:14px 0 0;}
+  .matrix-title{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px 12px; padding:0 2px 8px;}
+  .matrix-title .t{font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--sage);}
+  .matrix-title .h{font-size:11.5px; color:var(--sage-dim);}
+  .mode-toggle{display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .mode-toggle button{
+    background:var(--card); border:none; color:var(--sage); font-family:'JetBrains Mono',monospace;
+    font-size:11px; padding:6px 12px; cursor:pointer; white-space:nowrap;
+  }
+  .mode-toggle button + button{border-left:1px solid var(--line);}
+  .mode-toggle button:hover{color:var(--chalk);}
+  .mode-toggle button.active{background:var(--amber); color:#ffffff; font-weight:600;}
+  .matrix-legend{display:flex; flex-wrap:wrap; gap:8px 18px; padding:0 2px 10px; font-size:11.5px; color:var(--chalk);}
+  .matrix-legend .item{display:flex; align-items:center; gap:6px;}
+  .matrix-legend .glyph{font-size:13px; line-height:1;}
+  .matrix-legend .star-glyph{color:var(--star);}
+  .matrix-legend .arrow-glyph{color:var(--spot); text-shadow:0 0 1px rgba(0,0,0,0.35);}
+  .matrix-wrap{overflow:auto; border:1px solid var(--line); border-radius:10px; max-height:75vh;}
+  table.matrix{border-collapse:separate; border-spacing:0; font-family:'JetBrains Mono',monospace; font-size:11px;}
+  .matrix th, .matrix td{padding:0; border-bottom:1px solid var(--line); border-right:1px solid var(--line);}
+  .matrix thead th{
+    position:sticky; top:0; z-index:2; background:var(--bg-alt); color:var(--sage); font-size:10.5px;
+    text-transform:uppercase; letter-spacing:0.04em; padding:8px 6px; cursor:pointer; white-space:nowrap; text-align:center;
+  }
+  .matrix thead th:hover{color:var(--chalk);}
+  .matrix thead th.team-head{position:sticky; left:0; top:0; z-index:3; text-align:left;}
+  .matrix td.team-cell{
+    position:sticky; left:0; z-index:1; background:var(--card); text-align:left; padding:8px 10px;
+    min-width:118px; max-width:118px; font-size:12px; color:var(--chalk); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .matrix tr.used-row .team-cell{color:var(--used); text-decoration:line-through;}
+  .matrix td.team-cell .proj-inline{display:block; font-size:9.5px; color:var(--sage-dim); font-weight:400; margin-top:1px;}
+  .matrix tr.used-row .proj-inline{color:var(--used);}
+  .matrix td.wk-cell{min-width:56px; max-width:56px; text-align:center; padding:6px 3px; cursor:pointer; position:relative; vertical-align:middle;}
+  .matrix td.wk-cell .opp{display:block; font-size:10.5px; color:var(--chalk);}
+  .matrix td.wk-cell .pct{display:block; font-size:10.5px; margin-top:2px; color:var(--sage);}
+  .matrix td.wk-cell:hover{filter:brightness(0.96);}
+  .matrix td.wk-cell.bye{color:var(--sage-dim); background:var(--bg-alt); cursor:default; font-size:9.5px; letter-spacing:0.06em;}
+  .matrix td.wk-cell.bye:hover{filter:none;}
+  .matrix td.wk-cell.locked{opacity:0.4; cursor:default;}
+  .matrix td.wk-cell.locked:hover{filter:none;}
+  .matrix td.wk-cell.picked{background:var(--amber) !important;}
+  .matrix td.wk-cell.picked .opp, .matrix td.wk-cell.picked .pct{color:#ffffff; font-weight:700;}
+  .matrix td.wk-cell .star{
+    position:absolute; top:2px; right:2px; width:14px; height:14px; border-radius:50%;
+    background:var(--star); color:#ffffff; font-size:9px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.7);
+  }
+  .matrix td.wk-cell .later-flag{position:absolute; bottom:0px; right:2px; font-size:12px; color:var(--spot); text-shadow:0 0 1px rgba(0,0,0,0.35); cursor:help;}
+  .matrix td.wk-cell.picked .later-flag{color:var(--spot);}
+  .matrix td.wk-cell.tier-elite{ background:linear-gradient(rgba(37,99,235,0.50),rgba(37,99,235,0.50)),var(--card);}
+  .matrix td.wk-cell.tier-elite .pct{color:var(--amber); font-weight:800;}
+  .matrix td.wk-cell.tier-strong{ background:linear-gradient(rgba(37,99,235,0.28),rgba(37,99,235,0.28)),var(--card);}
+  .matrix td.wk-cell.tier-strong .pct{color:var(--amber); font-weight:700;}
+  .matrix td.wk-cell.tier-good{ background:linear-gradient(rgba(37,99,235,0.12),rgba(37,99,235,0.12)),var(--card);}
+  .matrix td.wk-cell.tier-good .pct{color:var(--amber);}
+  .matrix td.wk-cell.tier-mid{ background:var(--card);}
+  .matrix td.wk-cell.tier-risky{ background:linear-gradient(rgba(220,38,38,0.12),rgba(220,38,38,0.12)),var(--card);}
+  .matrix td.wk-cell.tier-risky .pct{color:var(--red);}
+  .matrix td.wk-cell.tier-weak{ background:linear-gradient(rgba(220,38,38,0.28),rgba(220,38,38,0.28)),var(--card);}
+  .matrix td.wk-cell.tier-weak .pct{color:var(--red); font-weight:700;}
+  .matrix td.wk-cell.tier-bad{ background:linear-gradient(rgba(220,38,38,0.50),rgba(220,38,38,0.50)),var(--card); box-shadow:inset 0 0 0 1px rgba(220,38,38,0.4);}
+  .matrix td.wk-cell.tier-bad .pct{color:var(--red); font-weight:800;}
+
+  footer{padding:16px 16px 8px; text-align:center; font-size:11px; color:var(--sage-dim); max-width:1200px; margin:0 auto;}
+  footer button{
+    background:none; border:1px solid var(--red-dim); color:var(--red); font-family:'JetBrains Mono',monospace;
+    font-size:10px; text-transform:uppercase; letter-spacing:0.08em; padding:8px 14px; border-radius:8px; cursor:pointer;
+  }
+  .loading{text-align:center; padding:60px 16px; color:var(--sage);}
+</style>
+</head>
+<body>
+<div id="app" class="loading">Loading 2026 schedule…</div>
+
+<script>
+const TEAMS = {
+  nwe:"Patriots", buf:"Bills", mia:"Dolphins", nyj:"Jets",
+  pit:"Steelers", rav:"Ravens", cin:"Bengals", cle:"Browns",
+  htx:"Texans", clt:"Colts", jax:"Jaguars", oti:"Titans",
+  kan:"Chiefs", rai:"Raiders", sdg:"Chargers", den:"Broncos",
+  phi:"Eagles", dal:"Cowboys", nyg:"Giants", was:"Commanders",
+  det:"Lions", gnb:"Packers", min:"Vikings", chi:"Bears",
+  tam:"Buccaneers", nor:"Saints", atl:"Falcons", car:"Panthers",
+  sfo:"49ers", sea:"Seahawks", ram:"Rams", crd:"Cardinals"
+};
+
+// Full names as returned by odds providers (e.g. The Odds API), for matching
+// live game data back to our PFR abbreviations.
+const TEAM_FULLNAME = {
+  nwe:"New England Patriots", buf:"Buffalo Bills", mia:"Miami Dolphins", nyj:"New York Jets",
+  pit:"Pittsburgh Steelers", rav:"Baltimore Ravens", cin:"Cincinnati Bengals", cle:"Cleveland Browns",
+  htx:"Houston Texans", clt:"Indianapolis Colts", jax:"Jacksonville Jaguars", oti:"Tennessee Titans",
+  kan:"Kansas City Chiefs", rai:"Las Vegas Raiders", sdg:"Los Angeles Chargers", den:"Denver Broncos",
+  phi:"Philadelphia Eagles", dal:"Dallas Cowboys", nyg:"New York Giants", was:"Washington Commanders",
+  det:"Detroit Lions", gnb:"Green Bay Packers", min:"Minnesota Vikings", chi:"Chicago Bears",
+  tam:"Tampa Bay Buccaneers", nor:"New Orleans Saints", atl:"Atlanta Falcons", car:"Carolina Panthers",
+  sfo:"San Francisco 49ers", sea:"Seattle Seahawks", ram:"Los Angeles Rams", crd:"Arizona Cardinals"
+};
+const FULLNAME_TO_ABBR = Object.fromEntries(Object.entries(TEAM_FULLNAME).map(([a,n])=>[n,a]));
+
+// Preseason win-total lines (source: market consensus, checked mid-Aug 2026).
+// Used as a rough power rating — NOT live weekly spreads. Accuracy will drift
+// as the season plays out; swap in real spreads for sharper numbers once games start.
+const WIN_TOTALS = {
+  crd:8.5, atl:7.5, rav:11.5, buf:12.5, car:6.5, chi:8.5, cin:9.5, cle:5.5,
+  dal:8.5, den:9.5, det:10.5, gnb:9.5, htx:9.5, clt:7.5, jax:7.5, kan:11.5,
+  rai:6.5, sdg:9.5, ram:9.5, mia:7.5, min:9.5, nwe:8.5, nor:4.5, nyg:5.5,
+  nyj:6.5, phi:11.5, pit:8.5, sfo:10.5, sea:8.5, tam:9.5, oti:6.5, was:9.5
+};
+const HFA = 1.7; // home field advantage, in points
+const WIN_PER_POINT = 2.8; // pts of per-game margin per extra season win, rough NFL rule of thumb
+const SPREAD_SLOPE = 7.5; // logistic slope converting point margin -> win probability
+
+function teamRating(abbr){ return (WIN_TOTALS[abbr] - 8.5) * WIN_PER_POINT; }
+
+// Team strength tier for the matrix's default sort — a straight league-wide ranking by
+// preseason projected win total. Not an in-season record: the app doesn't track actual
+// results yet, so there's no real W-L to show.
+const WIN_TOTAL_VALUES = Object.values(WIN_TOTALS);
+const WIN_TOTAL_MIN = Math.min(...WIN_TOTAL_VALUES);
+const WIN_TOTAL_MAX = Math.max(...WIN_TOTAL_VALUES);
+
+// Live weekly spreads, keyed "away_home" -> { point: home team spread, updated: ISO string }.
+// Populated by refreshOdds() from The Odds API and cached in localStorage. A negative point
+// means the home team is favored by that many points (standard spread convention).
+let liveOdds = {};
+let oddsKey = '';
+let lastOddsAttempt = 0; // ms epoch of the last refresh attempt, success or failure
+let oddsStatus = { type:'idle', text:'No live odds loaded yet — every matchup is using the preseason model.' };
+// Diff from the most recent refresh: [{type:'moved', home, away, oldProb, newProb, deltaPts}, {type:'new', home, away, prob}]
+let oddsChanges = [];
+const ODDS_AUTO_REFRESH_MS = 6 * 60 * 60 * 1000; // don't auto-refresh more than once per 6 hours
+
+function spreadToHomeProb(point){
+  const margin = -point; // spread already prices in home field
+  return 1 / (1 + Math.exp(-margin / SPREAD_SLOPE));
+}
+
+// Shared by both the auto-fetch path and manual entry: applies a batch of {away, home, point}
+// updates to liveOdds, diffs against the prior snapshot, and persists. Returns a summary the
+// caller turns into a status message.
+function applyOddsUpdates(updates){
+  const prevOdds = liveOdds;
+  liveOdds = { ...prevOdds };
+  const now = new Date().toISOString();
+  let matched = 0;
+  updates.forEach(({away, home, point})=>{
+    if(typeof point !== 'number' || Number.isNaN(point)) return;
+    liveOdds[away+'_'+home] = { point, updated: now };
+    matched++;
+  });
+  const changes = [];
+  Object.keys(liveOdds).forEach(key=>{
+    const [awayAbbr, homeAbbr] = key.split('_');
+    const cur = liveOdds[key];
+    const prev = prevOdds[key];
+    if(prev){
+      const deltaPts = cur.point - prev.point;
+      if(Math.abs(deltaPts) >= 0.5){
+        changes.push({ type:'moved', home:homeAbbr, away:awayAbbr, oldProb:spreadToHomeProb(prev.point), newProb:spreadToHomeProb(cur.point), deltaPts });
+      }
+    } else {
+      changes.push({ type:'new', home:homeAbbr, away:awayAbbr, prob:spreadToHomeProb(cur.point) });
+    }
+  });
+  changes.sort((a,b)=>{
+    const magA = a.type==='moved' ? Math.abs(a.deltaPts) : 0.4; // new lines rank in the middle
+    const magB = b.type==='moved' ? Math.abs(b.deltaPts) : 0.4;
+    return magB - magA;
+  });
+  oddsChanges = changes;
+  saveOddsState();
+  return { matched, changes, hadPrev: Object.keys(prevOdds).length > 0 };
+}
+
+function loadOddsState(){
+  try{
+    oddsKey = localStorage.getItem('survivor-2026-odds-key') || '';
+    lastOddsAttempt = parseInt(localStorage.getItem('survivor-2026-odds-last-attempt') || '0', 10) || 0;
+    const raw = localStorage.getItem('survivor-2026-live-odds');
+    if(raw) liveOdds = JSON.parse(raw);
+    const changesRaw = localStorage.getItem('survivor-2026-odds-changes');
+    if(changesRaw) oddsChanges = JSON.parse(changesRaw);
+    const entries = Object.values(liveOdds);
+    if(entries.length){
+      const latest = entries.reduce((m,o)=> o.updated > m ? o.updated : m, '');
+      oddsStatus = { type:'ok', text:`Live lines loaded for ${entries.length} game(s). Last refreshed ${new Date(latest).toLocaleString()}.` };
+    }
+  }catch(e){}
+}
+function saveOddsState(){
+  try{
+    localStorage.setItem('survivor-2026-odds-key', oddsKey);
+    localStorage.setItem('survivor-2026-live-odds', JSON.stringify(liveOdds));
+    localStorage.setItem('survivor-2026-odds-last-attempt', String(lastOddsAttempt));
+    localStorage.setItem('survivor-2026-odds-changes', JSON.stringify(oddsChanges));
+  }catch(e){}
+}
+// Called once on every page open. Silently re-fetches live lines if a key is saved and the
+// data is stale — this is what keeps the model current "as the season goes on" without
+// requiring a manual click each time. Gated on lastOddsAttempt (not last success) so a
+// failing key can't retry-storm the API on every visit.
+async function autoRefreshOddsIfStale(){
+  if(!oddsKey) return;
+  if(Date.now() - lastOddsAttempt < ODDS_AUTO_REFRESH_MS) return;
+  await window.refreshOdds();
+}
+
+function gameProbs(away, home){
+  const live = liveOdds[away+'_'+home];
+  if(live && typeof live.point === 'number'){
+    const homeProb = spreadToHomeProb(live.point);
+    return { away: 1 - homeProb, home: homeProb, live:true };
+  }
+  const margin = (teamRating(home) - teamRating(away)) + HFA; // positive favors home
+  const homeProb = 1 / (1 + Math.exp(-margin / SPREAD_SLOPE));
+  return { away: 1 - homeProb, home: homeProb, live:false };
+}
+
+// Win-probability tier for conditional formatting — seven bands from "trap" to "smash,"
+// symmetric around the 50% coinflip point, so the color ramp reads as a real gradient
+// instead of a hard blue/red split.
+function tierClass(prob){
+  if(prob >= 0.80) return 'tier-elite';
+  if(prob >= 0.65) return 'tier-strong';
+  if(prob >= 0.55) return 'tier-good';
+  if(prob >= 0.45) return 'tier-mid';
+  if(prob >= 0.35) return 'tier-risky';
+  if(prob >= 0.20) return 'tier-weak';
+  return 'tier-bad';
+}
+
+// Hungarian algorithm (Kuhn-Munkres, O(n^3)) — minimum-cost assignment of n rows to m
+// columns (n <= m), each row getting a distinct column. Verified against brute-force on
+// several test matrices before use here. Used to solve the whole-season pick allocation:
+// which team should be spent in which remaining week to maximize total survival odds.
+function hungarian(a){
+  const n = a.length, m = a[0].length;
+  const INF = 1e15;
+  const u = new Array(n+1).fill(0);
+  const v = new Array(m+1).fill(0);
+  const p = new Array(m+1).fill(0);
+  const way = new Array(m+1).fill(0);
+  for(let i=1;i<=n;i++){
+    p[0]=i;
+    let j0=0;
+    const minv=new Array(m+1).fill(INF);
+    const used=new Array(m+1).fill(false);
+    do{
+      used[j0]=true;
+      const i0=p[j0];
+      let delta=INF, j1=-1;
+      for(let j=1;j<=m;j++){
+        if(!used[j]){
+          const cur=a[i0-1][j-1]-u[i0]-v[j];
+          if(cur<minv[j]){ minv[j]=cur; way[j]=j0; }
+          if(minv[j]<delta){ delta=minv[j]; j1=j; }
+        }
+      }
+      for(let j=0;j<=m;j++){
+        if(used[j]){ u[p[j]]+=delta; v[j]-=delta; }
+        else { minv[j]-=delta; }
+      }
+      j0=j1;
+    } while(p[j0]!==0);
+    do{
+      const j1=way[j0];
+      p[j0]=p[j1];
+      j0=j1;
+    } while(j0!==0);
+  }
+  const result=new Array(n).fill(-1);
+  for(let j=1;j<=m;j++){ if(p[j]>0) result[p[j]-1]=j-1; }
+  return result;
+}
+
+// Whole-season optimizer: assigns every still-open week a team from the still-available
+// pool to maximize total season-long survival probability (product of each week's win%,
+// solved as a minimum-cost assignment on -log(winProb) so it's a real optimization, not
+// a greedy per-team lookahead).
+function buildSeasonPlan(){
+  const usedSoFar = usedTeams(SCHEDULE.length+1);
+  const openWeeks = [];
+  for(let w=1; w<=SCHEDULE.length; w++){ if(!picks[w]) openWeeks.push(w); }
+  const openTeams = Object.keys(TEAMS).filter(t=>!usedSoFar.has(t));
+  if(!openWeeks.length || !openTeams.length) return [];
+  const BIG = 1e6;
+  const cost = openWeeks.map(w=>{
+    const wk = SCHEDULE[w-1];
+    return openTeams.map(t=>{
+      const g = wk.find(([a,h])=>a===t||h===t);
+      if(!g) return BIG; // bye that week
+      const [a,h] = g;
+      const p = gameProbs(a,h);
+      const prob = t===h ? p.home : p.away;
+      return -Math.log(Math.max(prob,1e-9));
+    });
+  });
+  const assignment = hungarian(cost);
+  const rows = [];
+  assignment.forEach((teamIdx,i)=>{
+    if(teamIdx < 0) return;
+    const w = openWeeks[i];
+    const t = openTeams[teamIdx];
+    const wk = SCHEDULE[w-1];
+    const g = wk.find(([a,h])=>a===t||h===t);
+    if(!g) return; // shouldn't happen — bye cells carry the BIG penalty
+    const [a,h] = g;
+    const p = gameProbs(a,h);
+    const prob = t===h ? p.home : p.away;
+    rows.push({ week:w, team:t, opp: t===h?a:h, home:t===h, prob, live:p.live });
+  });
+  rows.sort((x,y)=> x.week - y.week);
+  let cumulative = 1;
+  rows.forEach(r=>{ cumulative *= r.prob; r.cumulative = cumulative; });
+  return rows;
+}
+
+// All still-available teams for a given week, ranked by that week's own win% — independent
+// of the season-long optimization. Used to show "if not the top pick, then who" alternates.
+// Note this can rank a different team #1 than the optimizer's assignment for that week: the
+// optimizer sometimes passes on a week's best team because it's an even stronger play later.
+function weekOptions(w){
+  const usedSoFar = usedTeams(SCHEDULE.length+1);
+  const options = [];
+  SCHEDULE[w-1].forEach(([a,h])=>{
+    const p = gameProbs(a,h);
+    [[a,p.away],[h,p.home]].forEach(([t,prob])=>{
+      if(usedSoFar.has(t)) return;
+      options.push({ team:t, prob, opp: t===h?a:h, home:t===h, live:p.live });
+    });
+  });
+  options.sort((x,y)=> y.prob - x.prob);
+  return options;
+}
+
+// [away, home] per week, using PFR abbreviations
+const SCHEDULE = [
+/* Week 1 */ [["nwe","sea"],["sfo","ram"],["chi","car"],["tam","cin"],["rav","clt"],["nor","det"],["buf","htx"],["cle","jax"],["nyj","oti"],["atl","pit"],["gnb","min"],["was","phi"],["mia","rai"],["crd","sdg"],["dal","nyg"],["den","kan"]],
+/* Week 2 */ [["det","buf"],["car","atl"],["min","chi"],["cin","htx"],["pit","nwe"],["gnb","nyj"],["phi","oti"],["nor","rav"],["cle","tam"],["jax","den"],["rai","sdg"],["sea","crd"],["was","dal"],["mia","sfo"],["clt","kan"],["nyg","ram"]],
+/* Week 3 */ [["atl","gnb"],["sdg","buf"],["car","cle"],["htx","clt"],["nyj","det"],["nwe","jax"],["kan","mia"],["oti","nyg"],["cin","pit"],["sea","was"],["crd","sfo"],["min","tam"],["rav","dal"],["rai","nor"],["ram","den"],["phi","chi"]],
+/* Week 4 */ [["pit","cle"],["clt","was"],["nwe","buf"],["nyj","chi"],["jax","cin"],["dal","htx"],["crd","nyg"],["ram","phi"],["oti","rav"],["gnb","tam"],["mia","min"],["kan","rai"],["sdg","sea"],["den","sfo"],["det","car"],["atl","nor"]],
+/* Week 5 */ [["tam","dal"],["phi","jax"],["cin","mia"],["min","nor"],["rai","nwe"],["cle","nyj"],["htx","oti"],["clt","pit"],["nyg","was"],["den","sdg"],["det","crd"],["chi","gnb"],["sfo","sea"],["rav","atl"],["buf","ram"]],
+/* Week 6 */ [["sea","den"],["htx","jax"],["chi","atl"],["rav","cle"],["oti","clt"],["nyj","nwe"],["nor","nyg"],["car","phi"],["pit","tam"],["crd","ram"],["sdg","kan"],["buf","rai"],["dal","gnb"],["was","sfo"]],
+/* Week 7 */ [["nwe","chi"],["pit","nor"],["sfo","atl"],["tam","car"],["nyg","htx"],["clt","min"],["mia","nyj"],["cle","oti"],["cin","rav"],["den","crd"],["gnb","det"],["ram","rai"],["kan","sea"],["dal","phi"]],
+/* Week 8 */ [["car","gnb"],["rav","buf"],["oti","cin"],["crd","dal"],["min","det"],["clt","jax"],["rai","nyj"],["cle","pit"],["atl","tam"],["sdg","ram"],["kan","den"],["nwe","mia"],["phi","was"],["chi","sea"]],
+/* Week 9 */ [["jax","rav"],["cin","atl"],["den","car"],["dal","clt"],["nyj","kan"],["det","mia"],["cle","nor"],["nyg","phi"],["ram","was"],["htx","sdg"],["rai","sfo"],["gnb","nwe"],["crd","sea"],["tam","chi"],["buf","min"]],
+/* Week 10 */ [["was","nyg"],["nwe","det"],["kan","atl"],["htx","cle"],["mia","clt"],["min","gnb"],["car","nor"],["buf","nyj"],["jax","oti"],["ram","crd"],["sea","rai"],["sfo","dal"],["pit","cin"],["sdg","rav"]],
+/* Week 11 */ [["clt","htx"],["mia","buf"],["rav","car"],["nor","chi"],["oti","dal"],["tam","det"],["crd","kan"],["jax","nyg"],["nyj","sdg"],["rai","den"],["pit","phi"],["min","sfo"],["cin","was"]],
+/* Week 12 */ [["gnb","ram"],["chi","det"],["phi","dal"],["kan","buf"],["den","pit"],["nor","cin"],["rai","cle"],["nyg","clt"],["rav","htx"],["nyj","mia"],["atl","min"],["oti","jax"],["was","crd"],["sea","sfo"],["nwe","sdg"],["car","tam"]],
+/* Week 13 */ [["kan","ram"],["det","atl"],["jax","chi"],["cin","cle"],["gnb","nor"],["sfo","nyg"],["was","oti"],["sdg","tam"],["phi","crd"],["mia","den"],["car","min"],["buf","nwe"],["htx","pit"],["dal","sea"]],
+/* Week 14 */ [["min","nwe"],["nor","car"],["atl","cle"],["oti","det"],["chi","mia"],["den","nyj"],["clt","phi"],["tam","rav"],["htx","was"],["sdg","rai"],["kan","cin"],["nyg","sea"],["ram","sfo"],["buf","gnb"],["pit","jax"]],
+/* Week 15 */ [["sfo","sdg"],["sea","phi"],["chi","buf"],["cin","car"],["mia","gnb"],["jax","htx"],["cle","nyg"],["clt","oti"],["rav","pit"],["nor","tam"],["atl","was"],["nyj","crd"],["den","rai"],["dal","ram"],["det","min"],["nwe","kan"]],
+/* Week 16 */ [["htx","phi"],["gnb","chi"],["buf","den"],["ram","sea"],["tam","atl"],["cin","clt"],["sdg","mia"],["was","min"],["crd","nor"],["nwe","nyj"],["car","pit"],["cle","rav"],["oti","rai"],["sfo","kan"],["jax","dal"],["nyg","det"]],
+/* Week 17 */ [["rav","cin"],["nor","atl"],["sea","car"],["clt","cle"],["nyg","dal"],["was","jax"],["buf","mia"],["den","nwe"],["min","nyj"],["pit","oti"],["kan","sdg"],["ram","tam"],["rai","crd"],["det","chi"],["phi","sfo"],["htx","gnb"]],
+/* Week 18 */ [["nyj","buf"],["atl","car"],["cle","cin"],["jax","clt"],["sfo","crd"],["sdg","den"],["det","gnb"],["oti","htx"],["rai","kan"],["chi","min"],["tam","nor"],["mia","nwe"],["phi","nyg"],["sea","ram"],["pit","rav"],["dal","was"]]
+];
+
+let picks = {}; // week (1-18) -> team abbr
+let oddsOpen = false;
+let teamSort = { key:'proj', dir:'desc' }; // key: 'proj' | 'name' | a week number (1-18)
+let matrixMode = 'best'; // 'best' = pick this team | 'fade' = pick this team's weekly opponent
+let manualEntryWeek = null; // set on first render to the nearest open week
+const STORAGE_KEY = 'survivor-2026-picks';
+
+function loadPicks(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) picks = JSON.parse(raw);
+  }catch(e){ picks = {}; }
+}
+function savePicks(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(picks)); }
+  catch(e){ console.error('save failed', e); }
+}
+
+function usedTeams(uptoWeekExclusive){
+  const used = new Set();
+  for(let w=1; w<uptoWeekExclusive; w++){ if(picks[w]) used.add(picks[w]); }
+  return used;
+}
+
+// This team's own win probability in week w, or null on a bye. The primitive everything
+// else (sorting, the later-week flag, the fade view) is built from.
+function teamWeekProb(t, w){
+  const g = SCHEDULE[w-1].find(([a,h])=>a===t||h===t);
+  if(!g) return null;
+  const [a,h] = g;
+  const p = gameProbs(a,h);
+  return t===h ? p.home : p.away;
+}
+
+// Sort key for a team row: 'name' (alpha), 'proj' (preseason win total), or a week number.
+// In 'fade' mode, week-number values flip to the OPPONENT's win probability (1 - this
+// team's own, since it's a binary win/loss model) — same math, opposite lens. Byes sort last.
+function teamSortValue(t, key, mode){
+  if(key === 'name') return TEAMS[t];
+  if(key === 'proj') return WIN_TOTALS[t];
+  const raw = teamWeekProb(t, key);
+  if(raw === null) return -1; // bye
+  return mode === 'fade' ? (1 - raw) : raw;
+}
+
+// This team's best win% (mode 'best') — or, in 'fade' mode, the OPPONENT's best win% via the
+// 1-minus flip — in any week strictly after `afterWeek` (byes skipped). Used to flag "you'd
+// be leaving win probability on the table" by spending/fading a team now instead of a
+// stronger later week. -1 if no games remain after that week.
+// Only flag when the later week is a genuine standout (elite-tier, 80%+) AND clearly better
+// than this week — otherwise nearly every non-peak week would get flagged, which is noise.
+const LATER_FLAG_MARGIN = 0.20;
+const LATER_FLAG_MIN_PROB = 0.80;
+function laterBestFor(t, afterWeek, mode){
+  let best = -1;
+  for(let w2 = afterWeek+1; w2 <= SCHEDULE.length; w2++){
+    const raw = teamWeekProb(t, w2);
+    if(raw === null) continue;
+    const val = mode === 'fade' ? (1 - raw) : raw;
+    if(val > best) best = val;
+  }
+  return best;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  const totalWeeks = SCHEDULE.length;
+  const picksMade = Object.keys(picks).length;
+  const usedSoFar = usedTeams(totalWeeks+1);
+  const remaining = 32 - usedSoFar.size;
+
+  if(manualEntryWeek === null){
+    manualEntryWeek = totalWeeks;
+    for(let w=1; w<=totalWeeks; w++){ if(!picks[w]){ manualEntryWeek = w; break; } }
+  }
+
+  let headerHTML = `
+    <header><div class="head-row">
+      <h1>SURVIVOR<span>2026 · 18 WK</span></h1>
+      <div class="head-stats">
+        <span><strong>${picksMade}</strong> picked</span>
+        <span><strong>${totalWeeks-picksMade}</strong> left</span>
+        <span><strong>${remaining}</strong> alive</span>
+      </div>
+    </div></header>`;
+
+  let oddsSummary;
+  if(oddsStatus.type==='err') oddsSummary = 'error — tap to fix';
+  else if(oddsChanges.length) oddsSummary = `${oddsChanges.length} update${oddsChanges.length>1?'s':''} since last check — tap for details`;
+  else if(oddsStatus.type==='ok') oddsSummary = 'set, no change since last check';
+  else oddsSummary = 'not set yet — tap to enter lines';
+
+  const changesHTML = oddsChanges.length ? `<div class="odds-changes">
+    ${oddsChanges.slice(0,8).map(c=>{
+      const matchup = `${TEAMS[c.home]} vs ${TEAMS[c.away]}`;
+      if(c.type==='moved'){
+        const oldPct = Math.round(c.oldProb*100), newPct = Math.round(c.newProb*100);
+        const arrow = newPct>oldPct ? '▲' : newPct<oldPct ? '▼' : '';
+        return `<div class="odds-change"><span>${matchup}</span><span>${oldPct}% → ${newPct}% ${arrow}</span></div>`;
+      }
+      return `<div class="odds-change"><span>${matchup}</span><span>new line · ${Math.round(c.prob*100)}%</span></div>`;
+    }).join('')}
+    ${oddsChanges.length>8 ? `<div class="odds-change more">+${oddsChanges.length-8} more</div>` : ''}
+  </div>` : '';
+
+  let manualRowsHTML = '';
+  SCHEDULE[manualEntryWeek-1].forEach(([a,h])=>{
+    const existing = liveOdds[a+'_'+h];
+    manualRowsHTML += `<div class="odds-manual-row">
+      <span>${TEAMS[a]} @ ${TEAMS[h]}</span>
+      <input class="odds-manual-input" type="number" step="0.5" inputmode="decimal" placeholder="-3.5"
+        value="${existing ? existing.point : ''}" data-away="${a}" data-home="${h}">
+    </div>`;
+  });
+  let weekOptionsHTML = '';
+  for(let w=1; w<=totalWeeks; w++){ weekOptionsHTML += `<option value="${w}" ${w===manualEntryWeek?'selected':''}>Week ${w}</option>`; }
+
+  let oddsHTML = `
+    <div class="odds">
+      <button class="odds-toggle" onclick="toggleOdds()"><span>Live odds — ${oddsSummary}</span><span class="chev">${oddsOpen?'▴':'▾'}</span></button>
+      ${oddsOpen ? `<div class="odds-body">
+        <div class="odds-status ${oddsStatus.type==='err'?'err':oddsStatus.type==='ok'?'ok':''}">${oddsStatus.text}</div>
+        ${changesHTML}
+
+        <div class="odds-manual-head">
+          <span>Enter this week's spreads</span>
+          <select class="odds-week-select" onchange="setManualWeek(this.value)">${weekOptionsHTML}</select>
+        </div>
+        <div class="odds-manual-hint">Home team's spread, negative = favored (e.g. -3.5). Get these from any sportsbook site. Blank fields are left unchanged.</div>
+        <div class="odds-manual-grid">${manualRowsHTML}</div>
+        <button class="odds-btn" style="margin-top:8px; width:100%;" onclick="saveManualLines(${manualEntryWeek})">Save week ${manualEntryWeek} lines</button>
+
+        <div class="odds-auto">
+          <div class="odds-auto-head">Auto-fetch (only works if this file is opened directly on your computer, not the published link)</div>
+          <div class="odds-row">
+            <input class="odds-input" type="password" id="odds-key-input" placeholder="The Odds API key" value="${oddsKey.replace(/"/g,'&quot;')}" onchange="saveOddsKey(this.value)">
+            <button class="odds-btn" onclick="refreshOdds()">Refresh</button>
+          </div>
+          <div class="odds-hint">Free key at the-odds-api.com (500 requests/month). Stored only in this browser — never in the page itself.</div>
+        </div>
+      </div>` : ''}
+    </div>`;
+
+  const seasonRows = buildSeasonPlan();
+  const suggestedCell = new Set(seasonRows.map(r=>r.week+'_'+r.team));
+  let planStripHTML;
+  if(seasonRows.length){
+    const finalOdds = seasonRows[seasonRows.length-1].cumulative*100;
+    planStripHTML = `<div class="planstrip">
+      <div class="planstrip-head">
+        <span class="planstrip-title">★ Optimized plan — every open week</span>
+        <span class="planstrip-odds">Full-season odds: <strong>${finalOdds.toFixed(1)}%</strong></span>
+      </div>
+      <div class="planstrip-row">
+        ${seasonRows.map(r=>{
+          const alts = weekOptions(r.week).filter(o=>o.team!==r.team).slice(0,2);
+          return `<div class="planchip ${tierClass(r.prob)}" onclick="scrollToWeek(${r.week})">
+            <span class="pc-wk">WK ${r.week}</span>
+            <div class="pc-top"><span class="pc-team">${TEAMS[r.team]}</span><span class="pc-pct">${Math.round(r.prob*100)}%</span></div>
+            ${alts.length ? `<div class="pc-alts">${alts.map(a=>`<div class="pc-alt"><span>or ${TEAMS[a.team]}</span><b>${Math.round(a.prob*100)}%</b></div>`).join('')}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="model-note">Solved as a whole-season assignment (Hungarian algorithm) to maximize the odds of surviving every remaining week combined — not a greedy pick. Starred cells below match the bold pick in each card. "Or" lines are that week's next-best options if you'd rather not spend the top pick now — note the optimizer may already be holding a team back for an even better week elsewhere, so taking an alternate can cost you that future matchup. Recomputes automatically as picks and odds change.</div>
+    </div>`;
+  } else {
+    planStripHTML = `<div class="planstrip"><div class="model-note">No open weeks or teams left to plan.</div></div>`;
+  }
+
+  let teamOrder = Object.keys(TEAMS);
+  teamOrder.sort((a,b)=>{
+    const va = teamSortValue(a, teamSort.key, matrixMode), vb = teamSortValue(b, teamSort.key, matrixMode);
+    const cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb;
+    return teamSort.dir === 'asc' ? cmp : -cmp;
+  });
+
+  let theadWeeks = '';
+  for(let w=1; w<=totalWeeks; w++){
+    const active = teamSort.key === w;
+    const caret = active ? (teamSort.dir==='desc' ? ' ▼' : ' ▲') : '';
+    theadWeeks += `<th id="wk-head-${w}" onclick="setTeamSort(${w})">W${w}${caret}</th>`;
+  }
+
+  let rowsHTML = '';
+  teamOrder.forEach(t=>{
+    const used = matrixMode === 'best' && usedSoFar.has(t);
+    let cells = '';
+    for(let w=1; w<=totalWeeks; w++){
+      const wk = SCHEDULE[w-1];
+      const g = wk.find(([a,h])=>a===t||h===t);
+      if(!g){ cells += `<td class="wk-cell bye">BYE</td>`; continue; }
+      const [a,h] = g;
+      const p = gameProbs(a,h);
+      // Anchor team is always t (the row's identity). In 'fade' mode the actual PICK is t's
+      // opponent that week — same schedule, same math, just swap who's "us" vs "them."
+      const opp = t===h ? a : h;
+      const pickTeam = matrixMode === 'fade' ? opp : t;
+      const pickIsHome = pickTeam === h;
+      const prob = pickIsHome ? p.home : p.away;
+      const isPicked = picks[w] === pickTeam;
+      const isLocked = usedSoFar.has(pickTeam) && !isPicked;
+      const suggested = !isPicked && !isLocked && suggestedCell.has(w+'_'+pickTeam);
+      const laterBest = isLocked ? -1 : laterBestFor(t, w, matrixMode);
+      const missingOut = laterBest >= LATER_FLAG_MIN_PROB && laterBest - prob >= LATER_FLAG_MARGIN;
+      const missingOutTitle = matrixMode === 'fade'
+        ? `${TEAMS[t]} has an even tougher matchup later (opponent win% ${Math.round(laterBest*100)}%) — fading them now gives up that edge.`
+        : `${TEAMS[pickTeam]} has a stronger matchup later: ${Math.round(laterBest*100)}% — picking them now gives up that edge.`;
+      const cls = ['wk-cell'];
+      if(isPicked) cls.push('picked');
+      else if(isLocked) cls.push('locked');
+      else cls.push(tierClass(prob));
+      cells += `<td class="${cls.join(' ')}"${isLocked?'':` onclick="pick(${w},'${pickTeam}')"`}>
+        ${suggested?'<span class="star">★</span>':''}
+        ${missingOut?`<span class="later-flag" title="${missingOutTitle}">▲</span>`:''}
+        <span class="opp">${matrixMode==='fade' ? pickTeam.toUpperCase() : `${pickIsHome?'vs':'@'} ${opp.toUpperCase()}`}</span>
+        <span class="pct">${Math.round(prob*100)}%${p.live?' •':''}</span>
+      </td>`;
+    }
+    rowsHTML += `<tr class="${used?'used-row':''}">
+      <td class="team-cell">${TEAMS[t]}<span class="proj-inline">${WIN_TOTALS[t]} proj wins</span></td>
+      ${cells}
+    </tr>`;
+  });
+
+  let teamSortLabel = 'Team';
+  if(teamSort.key === 'proj') teamSortLabel = `Team (${matrixMode==='fade'?'weakness':'strength'}) ${teamSort.dir==='desc'?'▼':'▲'}`;
+  else if(teamSort.key === 'name') teamSortLabel = `Team (A–Z) ${teamSort.dir==='asc'?'▲':'▼'}`;
+  const teamHeadNextKey = teamSort.key === 'proj' ? 'name' : 'proj';
+  const hintText = matrixMode === 'fade'
+    ? "Click a cell to pick that team's opponent that week · click any header to sort by it"
+    : 'Click a cell to pick · click any header to sort by it';
+  const arrowLegendText = matrixMode === 'fade'
+    ? 'This team has an even tougher matchup later — fading them now gives that up'
+    : 'This team has a much better matchup later — using them now gives that up';
+  const modelNoteText = matrixMode === 'fade'
+    ? "Colored by the pick's (opponent's) win probability — live line where available, preseason model otherwise. Rows are the weak teams you're fading, sorted worst-first; each cell is who to pick against them that week."
+    : "Colored by win probability — live line where available, preseason model otherwise. A team's row dims once it's used elsewhere in the season.";
+  let matrixHTML = `
+    <div class="matrix-section">
+      <div class="matrix-title">
+        <span class="t">Every team, every week</span>
+        <div class="mode-toggle">
+          <button class="${matrixMode==='best'?'active':''}" onclick="setMatrixMode('best')">Best team to pick</button>
+          <button class="${matrixMode==='fade'?'active':''}" onclick="setMatrixMode('fade')">Fade the worst team</button>
+        </div>
+        <span class="h">${hintText}</span>
+      </div>
+      <div class="matrix-legend">
+        <span class="item"><span class="glyph star-glyph">★</span> Optimizer's suggested pick for that week</span>
+        <span class="item"><span class="glyph arrow-glyph">▲</span> ${arrowLegendText}</span>
+      </div>
+      <div class="matrix-wrap">
+        <table class="matrix">
+          <thead><tr>
+            <th class="team-head" onclick="setTeamSort('${teamHeadNextKey}')">${teamSortLabel}</th>
+            ${theadWeeks}
+          </tr></thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
+      </div>
+      <div class="model-note">${modelNoteText}</div>
+    </div>`;
+
+  app.className = '';
+  app.innerHTML = `
+    ${headerHTML}
+    <div class="wrap">
+      ${oddsHTML}
+      ${planStripHTML}
+      ${matrixHTML}
+      <footer>
+        Saved automatically to this device.
+        <div style="margin-top:10px;"><button onclick="resetAll()">Reset all picks</button></div>
+      </footer>
+    </div>
+  `;
+}
+
+window.pick = function(week, team){
+  if(picks[week] === team){ delete picks[week]; }
+  else { picks[week] = team; }
+  savePicks();
+  render();
+};
+window.scrollToWeek = function(w){
+  const el = document.getElementById('wk-head-'+w);
+  if(el) el.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
+};
+window.setTeamSort = function(key){
+  // key arrives as a string from the onclick attribute; normalize week numbers back to Number
+  const normKey = /^\d+$/.test(String(key)) ? parseInt(key, 10) : key;
+  if(teamSort.key === normKey){ teamSort.dir = teamSort.dir === 'asc' ? 'desc' : 'asc'; }
+  else { teamSort = { key: normKey, dir: normKey === 'name' ? 'asc' : 'desc' }; }
+  render();
+};
+window.setMatrixMode = function(mode){
+  if(matrixMode === mode) return;
+  matrixMode = mode;
+  // Reset to a sensible default sort for the new lens: strongest-first for picking,
+  // weakest-first for fading — rather than carrying over a now-backwards sort.
+  teamSort = { key:'proj', dir: mode==='fade' ? 'asc' : 'desc' };
+  render();
+};
+window.toggleOdds = function(){
+  oddsOpen = !oddsOpen;
+  render();
+};
+window.saveOddsKey = function(v){
+  oddsKey = v.trim();
+  saveOddsState();
+};
+window.setManualWeek = function(w){
+  manualEntryWeek = parseInt(w, 10);
+  render();
+};
+window.saveManualLines = function(week){
+  const inputs = document.querySelectorAll('.odds-manual-input');
+  const updates = [];
+  inputs.forEach(inp=>{
+    const val = inp.value.trim();
+    if(val === '') return;
+    const point = parseFloat(val);
+    if(Number.isNaN(point)) return;
+    updates.push({ away: inp.dataset.away, home: inp.dataset.home, point });
+  });
+  if(!updates.length){
+    oddsStatus = { type:'err', text:'Enter at least one spread before saving.' };
+    render();
+    return;
+  }
+  const { matched, changes } = applyOddsUpdates(updates);
+  const movedCount = changes.filter(c=>c.type==='moved').length;
+  const newCount = changes.filter(c=>c.type==='new').length;
+  let summary = `Saved ${matched} line(s) for week ${week}.`;
+  if(movedCount || newCount){
+    const parts = [];
+    if(movedCount) parts.push(`${movedCount} moved`);
+    if(newCount) parts.push(`${newCount} new`);
+    summary += ` (${parts.join(', ')} vs last time)`;
+  }
+  oddsStatus = { type:'ok', text: summary };
+  render();
+};
+window.refreshOdds = async function(){
+  if(!oddsKey){
+    oddsStatus = { type:'err', text:'Paste an API key first (free at the-odds-api.com), then hit Refresh.' };
+    render();
+    return;
+  }
+  lastOddsAttempt = Date.now();
+  saveOddsState();
+  oddsStatus = { type:'idle', text:'Fetching live lines…' };
+  render();
+  try{
+    const url = `https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds/?apiKey=${encodeURIComponent(oddsKey)}&regions=us&markets=spreads&oddsFormat=american`;
+    const res = await fetch(url);
+    if(res.status === 401){
+      oddsStatus = { type:'err', text:'That API key was rejected (401) — double-check it was copied correctly.' };
+    }else if(res.status === 429){
+      oddsStatus = { type:'err', text:"Rate limited (429) — this key's monthly quota is used up." };
+    }else if(!res.ok){
+      oddsStatus = { type:'err', text:`Odds provider returned an error (${res.status}). Still using the preseason model.` };
+    }else{
+      const data = await res.json();
+      const updates = [];
+      data.forEach(game=>{
+        const homeAbbr = FULLNAME_TO_ABBR[game.home_team];
+        const awayAbbr = FULLNAME_TO_ABBR[game.away_team];
+        if(!homeAbbr || !awayAbbr) return;
+        const points = [];
+        (game.bookmakers||[]).forEach(bk=>{
+          const mkt = (bk.markets||[]).find(m=>m.key==='spreads');
+          if(!mkt) return;
+          const outcome = mkt.outcomes.find(o=>o.name===game.home_team);
+          if(outcome && typeof outcome.point === 'number') points.push(outcome.point);
+        });
+        if(!points.length) return;
+        updates.push({ away:awayAbbr, home:homeAbbr, point: points.reduce((a,b)=>a+b,0)/points.length });
+      });
+      const { matched, changes, hadPrev } = applyOddsUpdates(updates);
+      if(!matched){
+        oddsStatus = { type:'err', text:'Connected, but no matching games had a spread posted yet — try again closer to kickoff.' };
+      } else {
+        const movedCount = changes.filter(c=>c.type==='moved').length;
+        const newCount = changes.filter(c=>c.type==='new').length;
+        let summary = `Loaded live lines for ${matched} game(s).`;
+        if(movedCount || newCount){
+          const parts = [];
+          if(movedCount) parts.push(`${movedCount} line${movedCount>1?'s':''} moved`);
+          if(newCount) parts.push(`${newCount} new line${newCount>1?'s':''} posted`);
+          summary += ` ${parts.join(', ')} since last check.`;
+        } else if(hadPrev){
+          summary += ' No change since last check.';
+        }
+        oddsStatus = { type:'ok', text: summary };
+      }
+    }
+  }catch(e){
+    oddsStatus = { type:'err', text:"Auto-fetch failed — most likely because this is the published artifact link, which blocks outbound requests to outside sites for security. That only works when this HTML file is opened directly on your computer, not through claude.ai. Use manual entry below instead — it works everywhere." };
+  }
+  render();
+};
+window.resetAll = function(){
+  if(confirm('Clear every pick for the season? This cannot be undone.')){
+    picks = {};
+    savePicks();
+    render();
+  }
+};
+
+(function init(){
+  loadPicks();
+  loadOddsState();
+  render();
+  let firstOpen = 1;
+  for(let w=1; w<=SCHEDULE.length; w++){ firstOpen = w; if(!picks[w]) break; }
+  window.scrollToWeek(firstOpen);
+  autoRefreshOddsIfStale();
+})();
+</script>
+</body>
+</html>
