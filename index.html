@@ -38,6 +38,7 @@
   h1 span{color:var(--amber); font-size:11.5px; font-family:'JetBrains Mono',monospace; letter-spacing:0.1em; margin-left:8px; font-weight:400;}
   .head-stats{display:flex; gap:14px; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--sage);}
   .head-stats strong{color:var(--chalk); font-size:13px;}
+  .elim-banner{max-width:1200px; margin:8px auto 0; background:rgba(220,38,38,0.12); border:1px solid var(--red); color:var(--red); font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:6px;}
 
   /* Live odds — collapsed by default to save space */
   .odds{margin:8px 0 0; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
@@ -164,6 +165,14 @@
   .matrix td.wk-cell.locked:hover{filter:none;}
   .matrix td.wk-cell.picked{background:var(--amber) !important;}
   .matrix td.wk-cell.picked .opp, .matrix td.wk-cell.picked .pct{color:#ffffff; font-weight:700;}
+  .matrix td.wk-cell.final{cursor:default;}
+  .matrix td.wk-cell.final-win{background:rgba(22,163,74,0.16);}
+  .matrix td.wk-cell.final-win .pct{color:var(--star); font-weight:700;}
+  .matrix td.wk-cell.final-loss{background:rgba(220,38,38,0.16);}
+  .matrix td.wk-cell.final-loss .pct{color:var(--red); font-weight:700;}
+  .matrix td.wk-cell.final-tie{background:var(--bg-alt);}
+  .matrix td.wk-cell.final:hover{filter:none;}
+  .matrix td.wk-cell.picked-final{box-shadow:inset 0 0 0 2px var(--amber);}
   .matrix td.wk-cell .star{
     position:absolute; top:2px; right:2px; width:14px; height:14px; border-radius:50%;
     background:var(--star); color:#ffffff; font-size:9px; display:flex; align-items:center; justify-content:center;
@@ -235,6 +244,31 @@ const HFA = 1.7; // home field advantage, in points
 const WIN_PER_POINT = 2.8; // pts of per-game margin per extra season win, rough NFL rule of thumb
 const SPREAD_SLOPE = 7.5; // logistic slope converting point margin -> win probability
 
+// Baked-in current spreads, "awayabbr_homeabbr" -> {point, updated: ISO string}. Point is the
+// HOME team's spread (negative = home favored), same convention as liveOdds/The Odds API below.
+// Populated by the automated Tue/Thu refresh so the published site shows real current-week
+// lines without requiring a visitor's own API key. Seeded into liveOdds on load (see
+// loadOddsState) for any game that doesn't already have a personal manual/API-refreshed line
+// saved in this browser, so a visitor's own entry always takes precedence over this baseline.
+const BASELINE_LINES = {
+  det_buf: {point:-3.0, updated:"2026-09-15T12:29:54Z"},
+  phi_oti: {point:-7.0, updated:"2026-09-15T12:29:54Z"},
+  nor_rav: {point:-8.5, updated:"2026-09-15T12:29:54Z"},
+  cle_tam: {point:-8.5, updated:"2026-09-15T12:29:54Z"},
+  gnb_nyj: {point:-5.5, updated:"2026-09-15T12:29:54Z"},
+  pit_nwe: {point:-5.5, updated:"2026-09-15T12:29:54Z"},
+  cin_htx: {point:-2.5, updated:"2026-09-15T12:29:54Z"},
+  car_atl: {point:-1.5, updated:"2026-09-15T12:29:54Z"},
+  min_chi: {point:-6.5, updated:"2026-09-15T12:29:54Z"},
+  rai_sdg: {point:-7.0, updated:"2026-09-15T12:29:54Z"},
+  jax_den: {point:-2.5, updated:"2026-09-15T12:29:54Z"},
+  was_dal: {point:-4.5, updated:"2026-09-15T12:29:54Z"},
+  sea_crd: {point:-5.5, updated:"2026-09-15T12:29:54Z"},
+  mia_sfo: {point:-12.5, updated:"2026-09-15T12:29:54Z"},
+  clt_kan: {point:-6.5, updated:"2026-09-15T12:29:54Z"},
+  nyg_ram: {point:-7.5, updated:"2026-09-15T12:29:54Z"}
+};
+
 function teamRating(abbr){ return (WIN_TOTALS[abbr] - 8.5) * WIN_PER_POINT; }
 
 // Team strength tier for the matrix's default sort — a straight league-wide ranking by
@@ -303,6 +337,7 @@ function loadOddsState(){
     lastOddsAttempt = parseInt(localStorage.getItem('survivor-2026-odds-last-attempt') || '0', 10) || 0;
     const raw = localStorage.getItem('survivor-2026-live-odds');
     if(raw) liveOdds = JSON.parse(raw);
+    Object.keys(BASELINE_LINES).forEach(k=>{ if(!(k in liveOdds)) liveOdds[k] = BASELINE_LINES[k]; });
     const changesRaw = localStorage.getItem('survivor-2026-odds-changes');
     if(changesRaw) oddsChanges = JSON.parse(changesRaw);
     const entries = Object.values(liveOdds);
@@ -405,7 +440,7 @@ function hungarian(a){
 function buildSeasonPlan(){
   const usedSoFar = usedTeams(SCHEDULE.length+1);
   const openWeeks = [];
-  for(let w=1; w<=SCHEDULE.length; w++){ if(!picks[w]) openWeeks.push(w); }
+  for(let w=1; w<=SCHEDULE.length; w++){ if(!picks[w] && !weekIsFinal(w)) openWeeks.push(w); }
   const openTeams = Object.keys(TEAMS).filter(t=>!usedSoFar.has(t));
   if(!openWeeks.length || !openTeams.length) return [];
   const BIG = 1e6;
@@ -480,6 +515,45 @@ const SCHEDULE = [
 /* Week 18 */ [["nyj","buf"],["atl","car"],["cle","cin"],["jax","clt"],["sfo","crd"],["sdg","den"],["det","gnb"],["oti","htx"],["rai","kan"],["chi","min"],["tam","nor"],["mia","nwe"],["phi","nyg"],["sea","ram"],["pit","rav"],["dal","was"]]
 ];
 
+// Final scores for completed games. week (1-18) -> "awayabbr_homeabbr" -> {awayScore, homeScore}.
+// Populated by the automated Tue/Thu refresh (see scan-sources routine) by searching final
+// scores for the most recently completed week(s). Add an entry here for every game once it's
+// final; the app then locks that week (no more picking into the past) and shows the real result
+// instead of a probability guess. Leave a game out of this object until it's actually final.
+const RESULTS = {
+  1: {
+    "nwe_sea": {awayScore:10, homeScore:13},
+    "sfo_ram": {awayScore:27, homeScore:7},
+    "chi_car": {awayScore:59, homeScore:37},
+    "tam_cin": {awayScore:27, homeScore:33},
+    "rav_clt": {awayScore:41, homeScore:23},
+    "nor_det": {awayScore:30, homeScore:31},
+    "buf_htx": {awayScore:36, homeScore:31},
+    "cle_jax": {awayScore:10, homeScore:34},
+    "nyj_oti": {awayScore:23, homeScore:10},
+    "atl_pit": {awayScore:13, homeScore:20},
+    "gnb_min": {awayScore:22, homeScore:39},
+    "was_phi": {awayScore:22, homeScore:24},
+    "mia_rai": {awayScore:13, homeScore:27},
+    "crd_sdg": {awayScore:26, homeScore:14},
+    "dal_nyg": {awayScore:20, homeScore:28},
+    "den_kan": {awayScore:10, homeScore:31}
+  }
+};
+
+// Looks up the final result for one game, or null if it hasn't been played/recorded yet.
+function gameResult(w, away, home){
+  const r = RESULTS[w] && RESULTS[w][away+'_'+home];
+  if(!r) return null;
+  const winner = r.awayScore === r.homeScore ? 'tie' : (r.awayScore > r.homeScore ? 'away' : 'home');
+  return { ...r, winner };
+}
+// A week is "final" once every game on its slate has a recorded result — at that point it drops
+// out of the optimizer/next-pick logic since you can't pick into a week that's already happened.
+function weekIsFinal(w){
+  return SCHEDULE[w-1].every(([a,h]) => !!gameResult(w,a,h));
+}
+
 let picks = {}; // week (1-18) -> team abbr
 let oddsOpen = false;
 let teamSort = { key:'proj', dir:'desc' }; // key: 'proj' | 'name' | a week number (1-18)
@@ -553,7 +627,20 @@ function render(){
 
   if(manualEntryWeek === null){
     manualEntryWeek = totalWeeks;
-    for(let w=1; w<=totalWeeks; w++){ if(!picks[w]){ manualEntryWeek = w; break; } }
+    for(let w=1; w<=totalWeeks; w++){ if(!picks[w] && !weekIsFinal(w)){ manualEntryWeek = w; break; } }
+  }
+
+  let eliminatedWeek = null;
+  for(let w=1; w<=totalWeeks; w++){
+    const pickTeam = picks[w];
+    if(!pickTeam) continue;
+    const g = SCHEDULE[w-1].find(([a,h])=>a===pickTeam||h===pickTeam);
+    if(!g) continue;
+    const [a,h] = g;
+    const result = gameResult(w,a,h);
+    if(!result || result.winner==='tie') continue;
+    const won = pickTeam === (result.winner==='home'?h:a);
+    if(!won){ eliminatedWeek = w; break; }
   }
 
   let headerHTML = `
@@ -564,7 +651,9 @@ function render(){
         <span><strong>${totalWeeks-picksMade}</strong> left</span>
         <span><strong>${remaining}</strong> alive</span>
       </div>
-    </div></header>`;
+    </div>
+    ${eliminatedWeek ? `<div class="elim-banner">☠ Eliminated in Week ${eliminatedWeek} — ${TEAMS[picks[eliminatedWeek]]} lost.</div>` : ''}
+    </header>`;
 
   let oddsSummary;
   if(oddsStatus.type==='err') oddsSummary = 'error — tap to fix';
@@ -672,12 +761,24 @@ function render(){
       const g = wk.find(([a,h])=>a===t||h===t);
       if(!g){ cells += `<td class="wk-cell bye">BYE</td>`; continue; }
       const [a,h] = g;
-      const p = gameProbs(a,h);
       // Anchor team is always t (the row's identity). In 'fade' mode the actual PICK is t's
       // opponent that week — same schedule, same math, just swap who's "us" vs "them."
       const opp = t===h ? a : h;
       const pickTeam = matrixMode === 'fade' ? opp : t;
       const pickIsHome = pickTeam === h;
+      const result = gameResult(w, a, h);
+      if(result){
+        const isPickedFinal = picks[w] === pickTeam;
+        const pickWon = result.winner==='tie' ? null : (pickTeam === (result.winner==='home'?h:a));
+        const fcls = ['wk-cell','final', pickWon===true?'final-win':pickWon===false?'final-loss':'final-tie'];
+        if(isPickedFinal) fcls.push('picked-final');
+        cells += `<td class="${fcls.join(' ')}">
+          <span class="opp">${matrixMode==='fade' ? pickTeam.toUpperCase() : `${pickIsHome?'vs':'@'} ${opp.toUpperCase()}`}</span>
+          <span class="pct">${result.awayScore}-${result.homeScore}${pickWon===true?' W':pickWon===false?' L':' T'}</span>
+        </td>`;
+        continue;
+      }
+      const p = gameProbs(a,h);
       const prob = pickIsHome ? p.home : p.away;
       const isPicked = picks[w] === pickTeam;
       const isLocked = usedSoFar.has(pickTeam) && !isPicked;
@@ -895,7 +996,7 @@ window.resetAll = function(){
   loadOddsState();
   render();
   let firstOpen = 1;
-  for(let w=1; w<=SCHEDULE.length; w++){ firstOpen = w; if(!picks[w]) break; }
+  for(let w=1; w<=SCHEDULE.length; w++){ firstOpen = w; if(!picks[w] && !weekIsFinal(w)) break; }
   window.scrollToWeek(firstOpen);
   autoRefreshOddsIfStale();
 })();
