@@ -251,22 +251,21 @@ const SPREAD_SLOPE = 7.5; // logistic slope converting point margin -> win proba
 // loadOddsState) for any game that doesn't already have a personal manual/API-refreshed line
 // saved in this browser, so a visitor's own entry always takes precedence over this baseline.
 const BASELINE_LINES = {
-  det_buf: {point:-3.5, updated:"2026-09-15T13:10:18Z"},
-  phi_oti: {point:7.0, updated:"2026-09-15T13:10:18Z"},
-  nor_rav: {point:-8.5, updated:"2026-09-15T13:10:18Z"},
-  cle_tam: {point:-8.5, updated:"2026-09-15T13:10:18Z"},
-  gnb_nyj: {point:4.5, updated:"2026-09-15T13:10:18Z"},
-  pit_nwe: {point:-5.0, updated:"2026-09-15T13:10:18Z"},
-  cin_htx: {point:-2.5, updated:"2026-09-15T13:10:18Z"},
-  car_atl: {point:-1.5, updated:"2026-09-15T13:10:18Z"},
-  min_chi: {point:-5.5, updated:"2026-09-15T13:10:18Z"},
-  rai_sdg: {point:-7.0, updated:"2026-09-15T13:10:18Z"},
-  jax_den: {point:-2.5, updated:"2026-09-15T13:10:18Z"},
-  was_dal: {point:-3.5, updated:"2026-09-15T13:10:18Z"},
-  sea_crd: {point:5.5, updated:"2026-09-15T13:10:18Z"},
-  mia_sfo: {point:-12.5, updated:"2026-09-15T13:10:18Z"},
-  clt_kan: {point:-6.5, updated:"2026-09-15T13:10:18Z"},
-  nyg_ram: {point:-7.5, updated:"2026-09-15T13:10:18Z"}
+  phi_oti: {point:7.0, updated:"2026-09-17T14:00:00Z"},
+  nor_rav: {point:-8.5, updated:"2026-09-17T14:00:00Z"},
+  cle_tam: {point:-8.5, updated:"2026-09-17T14:00:00Z"},
+  gnb_nyj: {point:4.5, updated:"2026-09-17T14:00:00Z"},
+  pit_nwe: {point:-5.0, updated:"2026-09-17T14:00:00Z"},
+  cin_htx: {point:-2.5, updated:"2026-09-17T14:00:00Z"},
+  car_atl: {point:1.5, updated:"2026-09-17T14:00:00Z"},
+  min_chi: {point:-5.5, updated:"2026-09-17T14:00:00Z"},
+  rai_sdg: {point:-7.0, updated:"2026-09-17T14:00:00Z"},
+  jax_den: {point:-2.5, updated:"2026-09-17T14:00:00Z"},
+  was_dal: {point:-3.5, updated:"2026-09-17T14:00:00Z"},
+  sea_crd: {point:5.0, updated:"2026-09-17T14:00:00Z"},
+  mia_sfo: {point:-13.5, updated:"2026-09-17T14:00:00Z"},
+  clt_kan: {point:-6.5, updated:"2026-09-17T14:00:00Z"},
+  nyg_ram: {point:-7.5, updated:"2026-09-17T14:00:00Z"}
 };
 
 function teamRating(abbr){ return (WIN_TOTALS[abbr] - 8.5) * WIN_PER_POINT; }
@@ -538,6 +537,9 @@ const RESULTS = {
     "crd_sdg": {awayScore:26, homeScore:14},
     "dal_nyg": {awayScore:20, homeScore:28},
     "den_kan": {awayScore:10, homeScore:31}
+  },
+  2: {
+    "det_buf": {awayScore:31, homeScore:36}
   }
 };
 
