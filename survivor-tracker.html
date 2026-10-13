@@ -251,21 +251,20 @@ const SPREAD_SLOPE = 7.5; // logistic slope converting point margin -> win proba
 // loadOddsState) for any game that doesn't already have a personal manual/API-refreshed line
 // saved in this browser, so a visitor's own entry always takes precedence over this baseline.
 const BASELINE_LINES = {
-  tam_dal: {point:-8.5, updated:"2026-10-07T16:18:01Z"},
-  phi_jax: {point:-7.0, updated:"2026-10-07T16:18:01Z"},
-  chi_gnb: {point:3.0, updated:"2026-10-07T16:18:01Z"},
-  htx_oti: {point:7.5, updated:"2026-10-07T16:18:01Z"},
-  cin_mia: {point:7.0, updated:"2026-10-07T16:18:01Z"},
-  rai_nwe: {point:-3.5, updated:"2026-10-07T16:18:01Z"},
-  min_nor: {point:1.5, updated:"2026-10-07T16:18:01Z"},
-  cle_nyj: {point:-2.5, updated:"2026-10-07T16:18:01Z"},
-  clt_pit: {point:-2.5, updated:"2026-10-07T16:18:01Z"},
-  nyg_was: {point:-3.5, updated:"2026-10-07T16:18:01Z"},
-  den_sdg: {point:3.5, updated:"2026-10-07T16:18:01Z"},
-  det_crd: {point:5.5, updated:"2026-10-07T16:18:01Z"},
-  sfo_sea: {point:-3.5, updated:"2026-10-08T13:45:00Z"},
-  rav_atl: {point:4.5, updated:"2026-10-08T13:45:00Z"},
-  buf_ram: {point:-3.0, updated:"2026-10-07T16:18:01Z"}
+  sea_den: {point:2.5, updated:"2026-10-13T13:21:58Z"},
+  htx_jax: {point:-3.0, updated:"2026-10-13T13:21:58Z"},
+  chi_atl: {point:3.0, updated:"2026-10-13T13:21:58Z"},
+  rav_cle: {point:4.5, updated:"2026-10-13T13:21:58Z"},
+  oti_clt: {point:-3.5, updated:"2026-10-13T13:21:58Z"},
+  nyj_nwe: {point:-9.5, updated:"2026-10-13T13:21:58Z"},
+  nor_nyg: {point:-2.5, updated:"2026-10-13T13:21:58Z"},
+  car_phi: {point:-6.5, updated:"2026-10-13T13:21:58Z"},
+  pit_tam: {point:-1.5, updated:"2026-10-13T13:21:58Z"},
+  crd_ram: {point:-10.5, updated:"2026-10-13T13:21:58Z"},
+  sdg_kan: {point:-8.5, updated:"2026-10-13T13:21:58Z"},
+  buf_rai: {point:6.0, updated:"2026-10-13T13:21:58Z"},
+  dal_gnb: {point:-1.5, updated:"2026-10-13T13:21:58Z"},
+  was_sfo: {point:-7.5, updated:"2026-10-13T13:21:58Z"}
 };
 
 function teamRating(abbr){ return (WIN_TOTALS[abbr] - 8.5) * WIN_PER_POINT; }
@@ -591,6 +590,23 @@ const RESULTS = {
     "sdg_sea": {awayScore:23, homeScore:30},
     "det_car": {awayScore:26, homeScore:32},
     "atl_nor": {awayScore:45, homeScore:24}
+  },
+  5: {
+    "tam_dal": {awayScore:24, homeScore:16},
+    "phi_jax": {awayScore:17, homeScore:19},
+    "cin_mia": {awayScore:31, homeScore:24},
+    "min_nor": {awayScore:23, homeScore:13},
+    "rai_nwe": {awayScore:17, homeScore:45},
+    "cle_nyj": {awayScore:12, homeScore:17},
+    "htx_oti": {awayScore:26, homeScore:3},
+    "clt_pit": {awayScore:22, homeScore:34},
+    "nyg_was": {awayScore:27, homeScore:27},
+    "den_sdg": {awayScore:23, homeScore:17},
+    "det_crd": {awayScore:45, homeScore:21},
+    "chi_gnb": {awayScore:7, homeScore:31},
+    "sfo_sea": {awayScore:32, homeScore:29},
+    "rav_atl": {awayScore:30, homeScore:23},
+    "buf_ram": {awayScore:37, homeScore:34}
   }
 };
 
