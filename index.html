@@ -251,20 +251,20 @@ const SPREAD_SLOPE = 7.5; // logistic slope converting point margin -> win proba
 // loadOddsState) for any game that doesn't already have a personal manual/API-refreshed line
 // saved in this browser, so a visitor's own entry always takes precedence over this baseline.
 const BASELINE_LINES = {
-  sea_den: {point:2.5, updated:"2026-10-13T13:21:58Z"},
-  htx_jax: {point:-3.0, updated:"2026-10-13T13:21:58Z"},
-  chi_atl: {point:3.0, updated:"2026-10-13T13:21:58Z"},
-  rav_cle: {point:4.5, updated:"2026-10-13T13:21:58Z"},
-  oti_clt: {point:-3.5, updated:"2026-10-13T13:21:58Z"},
-  nyj_nwe: {point:-9.5, updated:"2026-10-13T13:21:58Z"},
-  nor_nyg: {point:-2.5, updated:"2026-10-13T13:21:58Z"},
-  car_phi: {point:-6.5, updated:"2026-10-13T13:21:58Z"},
-  pit_tam: {point:-1.5, updated:"2026-10-13T13:21:58Z"},
-  crd_ram: {point:-10.5, updated:"2026-10-13T13:21:58Z"},
-  sdg_kan: {point:-8.5, updated:"2026-10-13T13:21:58Z"},
-  buf_rai: {point:6.0, updated:"2026-10-13T13:21:58Z"},
-  dal_gnb: {point:-1.5, updated:"2026-10-13T13:21:58Z"},
-  was_sfo: {point:-7.5, updated:"2026-10-13T13:21:58Z"}
+  sea_den: {point:2.5, updated:"2026-10-15T13:20:12Z"},
+  htx_jax: {point:-2.5, updated:"2026-10-15T13:20:12Z"},
+  chi_atl: {point:3.0, updated:"2026-10-15T13:20:12Z"},
+  rav_cle: {point:4.5, updated:"2026-10-15T13:20:12Z"},
+  oti_clt: {point:-7.0, updated:"2026-10-15T13:20:12Z"},
+  nyj_nwe: {point:-7.0, updated:"2026-10-15T13:20:12Z"},
+  nor_nyg: {point:1.5, updated:"2026-10-15T13:20:12Z"},
+  car_phi: {point:-1.5, updated:"2026-10-15T13:20:12Z"},
+  pit_tam: {point:2.5, updated:"2026-10-15T13:20:12Z"},
+  crd_ram: {point:-12.5, updated:"2026-10-15T13:20:12Z"},
+  sdg_kan: {point:-8.5, updated:"2026-10-15T13:20:12Z"},
+  buf_rai: {point:6.0, updated:"2026-10-15T13:20:12Z"},
+  dal_gnb: {point:-1.5, updated:"2026-10-15T13:20:12Z"},
+  was_sfo: {point:-7.5, updated:"2026-10-15T13:20:12Z"}
 };
 
 function teamRating(abbr){ return (WIN_TOTALS[abbr] - 8.5) * WIN_PER_POINT; }
