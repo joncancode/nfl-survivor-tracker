@@ -251,20 +251,20 @@ const SPREAD_SLOPE = 7.5; // logistic slope converting point margin -> win proba
 // loadOddsState) for any game that doesn't already have a personal manual/API-refreshed line
 // saved in this browser, so a visitor's own entry always takes precedence over this baseline.
 const BASELINE_LINES = {
-  sea_den: {point:2.5, updated:"2026-10-15T13:20:12Z"},
-  htx_jax: {point:-2.5, updated:"2026-10-15T13:20:12Z"},
-  chi_atl: {point:3.0, updated:"2026-10-15T13:20:12Z"},
-  rav_cle: {point:4.5, updated:"2026-10-15T13:20:12Z"},
-  oti_clt: {point:-7.0, updated:"2026-10-15T13:20:12Z"},
-  nyj_nwe: {point:-7.0, updated:"2026-10-15T13:20:12Z"},
-  nor_nyg: {point:1.5, updated:"2026-10-15T13:20:12Z"},
-  car_phi: {point:-1.5, updated:"2026-10-15T13:20:12Z"},
-  pit_tam: {point:2.5, updated:"2026-10-15T13:20:12Z"},
-  crd_ram: {point:-12.5, updated:"2026-10-15T13:20:12Z"},
-  sdg_kan: {point:-8.5, updated:"2026-10-15T13:20:12Z"},
-  buf_rai: {point:6.0, updated:"2026-10-15T13:20:12Z"},
-  dal_gnb: {point:-1.5, updated:"2026-10-15T13:20:12Z"},
-  was_sfo: {point:-7.5, updated:"2026-10-15T13:20:12Z"}
+  nwe_chi: {point:-2.5, updated:"2026-10-20T13:25:00Z"},
+  pit_nor: {point:2.5, updated:"2026-10-20T13:25:00Z"},
+  sfo_atl: {point:4.5, updated:"2026-10-20T13:25:00Z"},
+  tam_car: {point:-3.5, updated:"2026-10-20T13:25:00Z"},
+  nyg_htx: {point:-8.5, updated:"2026-10-20T13:25:00Z"},
+  clt_min: {point:-5.5, updated:"2026-10-20T13:25:00Z"},
+  mia_nyj: {point:-4.5, updated:"2026-10-20T13:25:00Z"},
+  cle_oti: {point:1.5, updated:"2026-10-20T13:25:00Z"},
+  cin_rav: {point:-2.5, updated:"2026-10-20T13:25:00Z"},
+  den_crd: {point:4.5, updated:"2026-10-20T13:25:00Z"},
+  gnb_det: {point:-3.5, updated:"2026-10-20T13:25:00Z"},
+  ram_rai: {point:5.5, updated:"2026-10-20T13:25:00Z"},
+  kan_sea: {point:-2.5, updated:"2026-10-20T13:25:00Z"},
+  dal_phi: {point:5.0, updated:"2026-10-20T13:25:00Z"}
 };
 
 function teamRating(abbr){ return (WIN_TOTALS[abbr] - 8.5) * WIN_PER_POINT; }
@@ -607,6 +607,22 @@ const RESULTS = {
     "sfo_sea": {awayScore:32, homeScore:29},
     "rav_atl": {awayScore:30, homeScore:23},
     "buf_ram": {awayScore:37, homeScore:34}
+  },
+  6: {
+    "sea_den": {awayScore:14, homeScore:17},
+    "htx_jax": {awayScore:34, homeScore:31},
+    "chi_atl": {awayScore:31, homeScore:23},
+    "rav_cle": {awayScore:10, homeScore:13},
+    "oti_clt": {awayScore:26, homeScore:20},
+    "nyj_nwe": {awayScore:19, homeScore:26},
+    "nor_nyg": {awayScore:34, homeScore:27},
+    "car_phi": {awayScore:25, homeScore:14},
+    "pit_tam": {awayScore:26, homeScore:19},
+    "crd_ram": {awayScore:18, homeScore:16},
+    "sdg_kan": {awayScore:6, homeScore:22},
+    "buf_rai": {awayScore:33, homeScore:30},
+    "dal_gnb": {awayScore:13, homeScore:23},
+    "was_sfo": {awayScore:17, homeScore:23}
   }
 };
 
